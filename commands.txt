@@ -1,0 +1,54 @@
+PART - 1
+
+Copy CourseProjectData to hdfs
+hdfs dfs -copyFromLocal /home/student44/CourseProjectData /home/44student44/
+
+run jar file
+hadoop jar hadoop-streaming-2.9.0.jar -input /home/44student44/CourseProjectData -output /home/44student44/projectOutput -file temperature_map.py -mapper temperature_map.py -file temperature_reduce.py -reducer temperature_reduce.py
+
+to check the output-
+hdfs dfs -ls /home/44student44/projectOutput
+
+hadoop fs -text /home/44student44/projectOutput/part-00000
+
+PART - 2
+copy text file to local 
+hdfs dfs -copyToLocal /home/44student44/projectOutput/part-00000 /home/student44/projectYearTemp.txt
+
+command to start pig
+pig -x local
+
+command to text file
+records = LOAD 'projectYearTemp.txt'
+AS (year:int, tempereture:int);
+
+DUMP records;
+
+grouped_records = GROUP records BY year;
+
+command to get max temperature
+max_temp = FOREACH grouped_records GENERATE group,
+MAX(records.tempereture);
+
+DUMP max_temp;
+
+command to get minimum temperature
+min_temp = FOREACH grouped_records GENERATE group
+MIN(records.tempereture);
+
+DUMP min_temp;
+
+
+PART-3
+command to start hive
+hive
+
+CREATE TABLE yearTemp(year STRING, temperature INT)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\t';
+
+LOAD DATA LOCAL INPATH 'projectYearTemp.txt' 
+OVERWRITE INTO TABLE yearTemp;
+
+SELECT year, AVG(temperature)
+FROM yearTemp
+GROUP BY year;
